@@ -1,7 +1,8 @@
 from flask import Flask
 from flask import Flask, request, render_template, redirect, flash, session
 from flask_debugtoolbar import DebugToolbarExtension
-from surveys import satisfaction_survey 
+from surveys import satisfaction_survey,surveys,personality_quiz
+
 
 app = Flask(__name__)
 
@@ -20,19 +21,32 @@ RESPONSES_KEY = "responses"
 def home():
     title = satisfaction_survey.title
     instruction=satisfaction_survey.instructions
-    session[RESPONSES_KEY] = []
+    
     return render_template('start.html',title=title,instruction=instruction)
+
 
 @app.route('/begin',methods=["POST"])
 def changetoquestions():
+    session[RESPONSES_KEY] = []
+    return redirect("/choose")
+
+
+@app.route("/choose")
+def choose():
+    return render_template('choose.html',surveys=surveys)
+
+
+@app.route("/chosen",methods=["POST"])
+def chosen():
     return redirect("/questions/0")
+
 
 
 
 @app.route('/questions/<int:question_id>')
 def show_question(question_id):
     """show question with given questionid"""
-    questions=satisfaction_survey.questions
+    questions = personality_quiz.questions
     q=questions[question_id].question
     choices=questions[question_id].choices
 
@@ -52,9 +66,6 @@ def show_question(question_id):
         # Trying to access questions out of order.
         flash(f"Invalid question id: {question_id}.")
         return redirect(f"/questions/{len(responses)}")
-
-
-
 
     return render_template('question.html',q=q,choices=choices)
 
