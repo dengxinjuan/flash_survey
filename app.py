@@ -15,17 +15,16 @@ toolbar = DebugToolbarExtension(app)
 
 #I dont understand this response_key, why not responses=[]
 RESPONSES_KEY = "responses"
+CURRENT_SURVEY_KEY = 'current_survey'
 
 
 @app.route('/')
 def home():
-    title = satisfaction_survey.title
-    instruction=satisfaction_survey.instructions
     
-    return render_template('start.html',title=title,instruction=instruction)
+    return render_template('base.html')
 
 
-@app.route('/begin',methods=["POST"])
+@app.route('/',methods=["POST"])
 def changetoquestions():
     session[RESPONSES_KEY] = []
     return redirect("/choose")
@@ -36,19 +35,32 @@ def choose():
     return render_template('choose.html',surveys=surveys)
 
 
-@app.route("/chosen",methods=["POST"])
-def chosen():
-    return redirect("/questions/0")
+@app.route("/choose",methods=["POST"])
+def pick_survey():
+    survey_id = request.form['survey_code']
+    survey = surveys[survey_id]
+    session[CURRENT_SURVEY_KEY] = survey_id
+    return render_template('start.html',survey=survey)
 
+@app.route("/begin",methods=['POST'])
+def start():
+    session[RESPONSES_KEY] = []
+
+    return redirect("/questions/0")
 
 
 
 @app.route('/questions/<int:question_id>')
 def show_question(question_id):
     """show question with given questionid"""
-    questions = personality_quiz.questions
+    responses = session.get(RESPONSES_KEY)
+    survey_code = session[CURRENT_SURVEY_KEY]
+    survey = surveys[survey_code]
+
+    questions = survey.questions
     q=questions[question_id].question
     choices=questions[question_id].choices
+    t = questions[question_id].allow_text
 
 
     responses = session.get(RESPONSES_KEY)
@@ -67,18 +79,23 @@ def show_question(question_id):
         flash(f"Invalid question id: {question_id}.")
         return redirect(f"/questions/{len(responses)}")
 
-    return render_template('question.html',q=q,choices=choices)
+    return render_template('question.html',q=q,choices=choices,t=t)
 
 
 @app.route('/answer',methods=["POST"])
 def answer_question():
     answer=request.form["answer"]
+    text=request.form.get('text',"")
 
     #I dont understand this session
     responses = session[RESPONSES_KEY]
-    responses.append(answer)
+    responses.append({"choice": answer, "text": text})
     session[RESPONSES_KEY] = responses
     # why session[respon>key]??
+
+    session[RESPONSES_KEY] = responses
+    survey_code = session[CURRENT_SURVEY_KEY]
+    survey = surveys[survey_code]
 
     if (len(responses) == len(satisfaction_survey.questions)):
         return redirect("/complete")
@@ -88,5 +105,8 @@ def answer_question():
 
 @app.route('/complete')
 def complete_survey():
-    return render_template('complete.html')
+    survey_id = session[CURRENT_SURVEY_KEY]
+    survey = surveys[survey_id]
+    responses = session[RESPONSES_KEY]
+    return render_template('complete.html',survey=survey,responses=responses)
 

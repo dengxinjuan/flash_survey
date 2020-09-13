@@ -3,13 +3,17 @@
 
 <h1>Choose the Survey Type</h1>
 
-<form  action="/chosen" method="POST">
-    {% for name,survey in surveys.items() %}
-    <p><input type="radio" name="survey_code" value="{{survey}}"> {{survey.title}}</p>
+
+<form method="POST" name="survey_code">
+  <p>choose survey type:</p>
+
+    {% for code, survey in surveys.items() %}
+    <p><input type="radio" value="{{ code }}" name="survey_code">({{ code }})-{{survey.title}}</p>
+   
     {% endfor %}
-    </select>
-    <button>Continue</button>
-  </form>
+
+  <button>Continue</button>
+</form>
 
 
 

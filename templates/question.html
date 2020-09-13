@@ -13,6 +13,13 @@
     <p><input type="radio" name="answer" value="{{ choice }}"> {{ choice }}</p>
     {% endfor %}
     </select>
+
+    {% if t %}
+    <p>
+    <textarea name="text"></textarea>
+    </p>
+    {% endif %}
+
     <button>Continue</button>
   </form>
 
